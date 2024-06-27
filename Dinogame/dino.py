@@ -149,7 +149,7 @@ class Score:
         self.hs = hs
         self.act = 0
         self.font = pygame.font.SysFont('monospace', 18)
-        self.color = (0, 0, 0)
+        self.color = (128, 128, 128)
         self.set_sound()
         self.show()
     
@@ -198,8 +198,8 @@ class Game:
     def set_labels(self):
         big_font = pygame.font.SysFont('monospace', 24, bold =True)
         small_font = pygame.font.SysFont('monospace', 18)
-        self.big_lbl = big_font.render('G A M E  O V E R!!!!', 1, (0, 0, 0))
-        self.small_lbl = small_font.render('Press r to restart the game', 1, (0, 0, 0))
+        self.big_lbl = big_font.render('G A M E  O V E R!!!!', 1, (128, 128, 128))
+        self.small_lbl = small_font.render('Press r to restart the game', 1, (128, 128, 128))
 
     def set_sound(self):
         path = os.path.join('assets/sounds/die.wav')
@@ -291,7 +291,7 @@ def main():
                     over = True
             
             #--Birds--
-            if game.score.act >= 20 and game.tospawn(loops):
+            if game.score.act >= 200 and game.tospawn(loops):
                 game.spawn_bird1()
 
             for bird1 in game.obstacles:
