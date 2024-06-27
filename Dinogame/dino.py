@@ -19,11 +19,12 @@ class BG:
         self.height = HEIGHT
         self.x = x
         self.y = 0
+        self.dark_mode = False
         self.set_texture()
         self.show()
 
     def update(self, dx):
-        self.x += dx
+        self.x += int(dx)
         if self.x <= -WIDTH:
             self.x = WIDTH
 
@@ -31,9 +32,14 @@ class BG:
     def show(self):
         screen.blit(self.texture, (self.x, self.y))    
     def set_texture(self):
-        path = os.path.join('assets/images/bg.png')
+        texture_file = 'bg_dark.png' if self.dark_mode else 'bg.png'
+        path = os.path.join(f'assets/images/{texture_file}')
         self.texture = pygame.image.load(path)
         self.texture = pygame.transform.scale(self.texture, (self.width, self.height))
+    
+    def enable_dark_mode(self):
+        self.dark_mode = True
+        self.set_texture()
 
 class Dino:
     def __init__(self):
@@ -103,7 +109,7 @@ class Cactus:
         self.show()
 
     def update(self, dx):
-        self.x += dx
+        self.x += int(dx)
 
     def show(self):
         screen.blit(self.texture, (self.x, self.y))
@@ -112,6 +118,26 @@ class Cactus:
         path = os.path.join('assets/images/cactus.png')
         self.texture = pygame.image.load(path)
         self.texture = pygame.transform.scale(self.texture, (self.width, self.height))
+
+class Bird1:
+    def __init__ (self, x):
+        self.width = 60
+        self.height = 25
+        self.x = x
+        self.y = 25
+        self.set_texture()
+        self.show()
+
+    def update(self, dx):
+        self.x += int(dx)
+
+    def show(self):
+        screen.blit(self.texture, (self.x, self.y))
+    def set_texture(self):
+        path = os.path.join('assets/images/bird1.png')
+        self.texture = pygame.image.load(path)
+        self.texture = pygame.transform.scale(self.texture, (self.width, self.height))
+
 
 class Collision:
     def between(self, obj1, obj2):
@@ -148,6 +174,12 @@ class Score:
     def check_sound(self):
         if self.act % 100 == 0 and self.act != 0:
             self.point_sound.play()
+        
+    def check_speed_increase(self):
+        if self.act % 100 == 0 and self.act != 0:
+            return True
+        return False
+    
 
 class Game:
     def __init__(self, hs = 0):
@@ -158,6 +190,7 @@ class Game:
         self.score = Score(hs)
         self.speed = 4
         self.playing = False
+        self.last_obstacle_x = 0  # Track the x position of the last obstacle
         self.set_sound() 
         self.set_labels()
         self.spawn_cactus()
@@ -192,11 +225,25 @@ class Game:
 
         # empty list  
         else:
-            x = random.randint(WIDTH + 100, 1000) #Return random integer in range [a, b], including both end points.
+           x = random.randint(WIDTH + 100, 1000) #Return random integer in range [a, b], including both end points.
         #create new cactus 
         cactus = Cactus(x)
         self.obstacles.append(cactus)
+        self.last_obstacle_x = x
+
+    def spawn_bird1(self):
+        x = random.randint(WIDTH + 100, 1000)
+        bird1 = Bird1(x)
+        self.obstacles.append(bird1)
+
+    def update_speed(self):
+        self.speed += 0.01
     
+    def check_dark_mode(self):
+        if self.score.act >= 190 and not self.bg[0].dark_mode:
+            for bg in self.bg:
+                bg.enable_dark_mode()
+
     def restart(self):
         self.__init__(hs = self.score.hs) #saves previous high score and overrides it if necessary
 
@@ -217,9 +264,16 @@ def main():
 
             loops += 1
 
+            #--speedincrease--
+            if game.score.check_speed_increase():
+                game.update_speed()
+            
+            
+            game.check_dark_mode()
+
             #--BG--
             for bg in game.bg:
-                bg.update(-game.speed)
+                bg.update(-int(game.speed))
                 bg.show()
 
             #--Dino--
@@ -231,11 +285,21 @@ def main():
                 game.spawn_cactus()
 
             for cactus in game.obstacles:
-                cactus.update(-game.speed)
+                cactus.update(-int(game.speed))
                 cactus.show()
-            #collisions
                 if game.collision.between(dino, cactus):
                     over = True
+            
+            #--Birds--
+            if game.score.act >= 20 and game.tospawn(loops):
+                game.spawn_bird1()
+
+            for bird1 in game.obstacles:
+                #bird.update(-int(game.speed))
+                bird1.show()
+                if game.collision.between(dino, bird1):
+                    over = True
+                
             
             if over:
                 game.over()
